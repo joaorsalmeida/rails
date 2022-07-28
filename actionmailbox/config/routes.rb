@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  scope "/rails/action_mailbox", module: "action_mailbox/ingresses" do
+  scope "/rails/action_mailbox", module: "action_mailbox/ingresses", system: true do
     post "/postmark/inbound_emails" => "postmark/inbound_emails#create", as: :rails_postmark_inbound_emails
     post "/relay/inbound_emails"    => "relay/inbound_emails#create",    as: :rails_relay_inbound_emails
     post "/sendgrid/inbound_emails" => "sendgrid/inbound_emails#create", as: :rails_sendgrid_inbound_emails
@@ -15,7 +15,7 @@ Rails.application.routes.draw do
   end
 
   # TODO: Should these be mounted within the engine only?
-  scope "rails/conductor/action_mailbox/", module: "rails/conductor/action_mailbox" do
+  scope "rails/conductor/action_mailbox/", module: "rails/conductor/action_mailbox", system: true do
     resources :inbound_emails, as: :rails_conductor_inbound_emails, only: %i[index new show create]
     get  "inbound_emails/sources/new", to: "inbound_emails/sources#new", as: :new_rails_conductor_inbound_email_source
     post "inbound_emails/sources", to: "inbound_emails/sources#create", as: :rails_conductor_inbound_email_sources

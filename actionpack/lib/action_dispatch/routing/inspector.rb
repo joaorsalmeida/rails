@@ -53,6 +53,10 @@ module ActionDispatch
         internal
       end
 
+      def system?
+        system
+      end
+
       def engine?
         app.engine?
       end
@@ -70,7 +74,7 @@ module ActionDispatch
 
       def format(formatter, filter = {})
         routes_to_display = filter_routes(normalize_filter(filter))
-        routes = collect_routes(routes_to_display)
+        routes = collect_routes(routes_to_display, filter)
         if routes.none?
           formatter.no_routes(collect_routes(@routes), filter)
           return formatter.result
@@ -108,10 +112,13 @@ module ActionDispatch
           end
         end
 
-        def collect_routes(routes)
-          routes.collect do |route|
+        def collect_routes(routes, filter = {})
+          result_routes = routes.collect do |route|
             RouteWrapper.new(route)
-          end.reject(&:internal?).collect do |route|
+          end.reject(&:internal?)
+
+          result_routes = result_routes.reject(&:system?) unless filter[:internal]
+          result_routes.collect do |route|
             collect_engine_routes(route)
 
             { name: route.name,

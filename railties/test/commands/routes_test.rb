@@ -17,7 +17,7 @@ class Rails::Command::RoutesTest < ActiveSupport::TestCase
       end
     RUBY
 
-    assert_equal <<~OUTPUT, run_routes_command([ "-c", "PostController" ])
+    assert_equal <<~OUTPUT, run_routes_command([ "--internal", "-c", "PostController" ])
                              Prefix Verb   URI Pattern                                             Controller#Action
                            new_post GET    /post/new(.:format)                                     posts#new
                           edit_post GET    /post/edit(.:format)                                    posts#edit
@@ -50,7 +50,7 @@ class Rails::Command::RoutesTest < ActiveSupport::TestCase
       end
     RUBY
 
-    assert_equal <<~MESSAGE, run_routes_command([ "-g", "show" ])
+    assert_equal <<~MESSAGE, run_routes_command(["--internal", "-g", "show" ])
                          Prefix Verb URI Pattern                                                                                       Controller#Action
                            cart GET  /cart(.:format)                                                                                   cart#show
   rails_conductor_inbound_email GET  /rails/conductor/action_mailbox/inbound_emails/:id(.:format)                                      rails/conductor/action_mailbox/inbound_emails#show
@@ -64,6 +64,11 @@ rails_blob_representation_proxy GET  /rails/active_storage/representations/proxy
     MESSAGE
 
     assert_equal <<~MESSAGE, run_routes_command([ "-g", "POST" ])
+                                     Prefix Verb URI Pattern     Controller#Action
+                                            POST /cart(.:format) cart#create
+    MESSAGE
+
+    assert_equal <<~MESSAGE, run_routes_command([ "-g", "POST", "-I" ])
                                      Prefix Verb URI Pattern                                                            Controller#Action
                                             POST /cart(.:format)                                                        cart#create
               rails_postmark_inbound_emails POST /rails/action_mailbox/postmark/inbound_emails(.:format)                action_mailbox/ingresses/postmark/inbound_emails#create
@@ -137,6 +142,17 @@ rails_blob_representation_proxy GET  /rails/active_storage/representations/proxy
     OUTPUT
 
     assert_equal <<~OUTPUT, run_routes_command([ "-c", "PostController" ])
+                             Prefix Verb   URI Pattern                Controller#Action
+                     new_admin_post GET    /admin/post/new(.:format)  admin/posts#new
+                    edit_admin_post GET    /admin/post/edit(.:format) admin/posts#edit
+                         admin_post GET    /admin/post(.:format)      admin/posts#show
+                                    PATCH  /admin/post(.:format)      admin/posts#update
+                                    PUT    /admin/post(.:format)      admin/posts#update
+                                    DELETE /admin/post(.:format)      admin/posts#destroy
+                                    POST   /admin/post(.:format)      admin/posts#create
+    OUTPUT
+
+    assert_equal <<~OUTPUT, run_routes_command([ "-c", "PostController", "-I" ])
                              Prefix Verb   URI Pattern                                             Controller#Action
                      new_admin_post GET    /admin/post/new(.:format)                               admin/posts#new
                     edit_admin_post GET    /admin/post/edit(.:format)                              admin/posts#edit
@@ -169,7 +185,22 @@ rails_blob_representation_proxy GET  /rails/active_storage/representations/proxy
       end
     RUBY
 
-    assert_equal <<~MESSAGE, run_routes_command
+    assert_equal <<~MESSAGE, run_routes_command()
+      You don't have any routes defined!
+
+      Please add some routes in config/routes.rb.
+
+      For more information about routes, see the Rails guide: https://guides.rubyonrails.org/routing.html.
+    MESSAGE
+  end
+
+  test "rails routes displays internal routes" do
+    app_file "config/routes.rb", <<-RUBY
+      Rails.application.routes.draw do
+      end
+    RUBY
+
+    assert_equal <<~MESSAGE, run_routes_command(["--internal"])
                                   Prefix Verb URI Pattern                                                                                       Controller#Action
            rails_postmark_inbound_emails POST /rails/action_mailbox/postmark/inbound_emails(.:format)                                           action_mailbox/ingresses/postmark/inbound_emails#create
               rails_relay_inbound_emails POST /rails/action_mailbox/relay/inbound_emails(.:format)                                              action_mailbox/ingresses/relay/inbound_emails#create
@@ -206,6 +237,28 @@ rails_conductor_inbound_email_incinerate POST /rails/conductor/action_mailbox/:i
 
     output = IO.stub(:console_size, [0, 27]) do
       run_routes_command([ "--expanded" ])
+    end
+
+    # rubocop:disable Layout/TrailingWhitespace
+    assert_equal <<~MESSAGE, output
+      --[ Route 1 ]--------------
+      Prefix            | cart
+      Verb              | GET
+      URI               | /cart(.:format)
+      Controller#Action | cart#show
+    MESSAGE
+    # rubocop:enable Layout/TrailingWhitespace
+  end
+
+  test "rails routes with expanded and internal option" do
+    app_file "config/routes.rb", <<-RUBY
+      Rails.application.routes.draw do
+        get '/cart', to: 'cart#show'
+      end
+    RUBY
+
+    output = IO.stub(:console_size, [0, 27]) do
+      run_routes_command([ "--expanded", "--internal" ])
     end
 
     # rubocop:disable Layout/TrailingWhitespace

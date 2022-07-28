@@ -10,7 +10,7 @@ require "action_dispatch/routing/endpoint"
 module ActionDispatch
   module Routing
     class Mapper
-      URL_OPTIONS = [:protocol, :subdomain, :domain, :host, :port]
+      URL_OPTIONS = [:protocol, :subdomain, :domain, :host, :port, :system]
 
       class Constraints < Routing::Endpoint # :nodoc:
         attr_reader :app, :constraints
@@ -124,6 +124,7 @@ module ActionDispatch
           @anchor             = anchor
           @via                = via
           @internal           = options.delete(:internal)
+          @system             = options.delete(:system)
           @scope_options      = scope_params[:options]
           ast                 = Journey::Ast.new(ast, formatted)
 
@@ -170,7 +171,7 @@ module ActionDispatch
           Journey::Route.new(name: name, app: application, path: path, constraints: conditions,
                              required_defaults: required_defaults, defaults: defaults,
                              request_method_match: request_method, precedence: precedence,
-                             scope_options: scope_options, internal: @internal)
+                             scope_options: scope_options, internal: @internal, system: @system)
         end
 
         def application

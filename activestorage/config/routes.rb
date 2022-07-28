@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  scope ActiveStorage.routes_prefix do
+  scope ActiveStorage.routes_prefix, system: true do
     get "/blobs/redirect/:signed_id/*filename" => "active_storage/blobs/redirect#show", as: :rails_service_blob
     get "/blobs/proxy/:signed_id/*filename" => "active_storage/blobs/proxy#show", as: :rails_service_blob_proxy
     get "/blobs/:signed_id/*filename" => "active_storage/blobs/redirect#show"

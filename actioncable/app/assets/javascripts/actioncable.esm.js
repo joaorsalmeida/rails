@@ -123,7 +123,8 @@ var INTERNAL = {
   disconnect_reasons: {
     unauthorized: "unauthorized",
     invalid_request: "invalid_request",
-    server_restart: "server_restart"
+    server_restart: "server_restart",
+    remote: "remote"
   },
   default_mount_path: "/cable",
   protocols: [ "actioncable-v1-json", "actioncable-unsupported" ]
